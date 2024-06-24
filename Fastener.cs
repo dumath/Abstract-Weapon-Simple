@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class Fastener : MonoBehaviour
 {
-
     [SerializeField] protected float rotationSpeed = 30f;
     protected Transform currentTarget;
 
