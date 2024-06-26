@@ -3,7 +3,7 @@ using UnityEngine;
 /* Абстракция башен оружия. Снаряд-ракетные.  */
 public abstract class Weapon : MonoBehaviour
 {
-    #region Object Propertyies
+    #region Object Properties
     [SerializeField] protected float rotationSpeed = 15.0f; // Скорость вертикального поворота.
     [SerializeField] protected float constrainedAngle = 25.0f; // Модуль вертикального ограничения.
 
