@@ -2,97 +2,123 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
+using System;
 
 public sealed class WeaponController : MonoBehaviour
 {
-    #region Nested classes
-    private delegate void SetTargetDelegate(Transform target);
-    private delegate void RemoveTargetDelegate();
+    #region Constants
+    public const float ACCURACY = 0.9998f;
     #endregion
 
     #region Object Propertyies
-    [SerializeField] private Weapon weapon; // Турель.
-    [SerializeField] private Fastener fastener; // Крепеж турели.
+    [SerializeField] private Weapon weapon; // РўСѓСЂРµР»СЊ.
+    [SerializeField] private Fastener fastener; // РљСЂРµРїРµР¶ С‚СѓСЂРµР»Рё.
 
-    [SerializeField] private GameObject barrel; // Дуло.
+    [SerializeField] private GameObject barrel; // Р”СѓР»Рѕ.
 
-    [SerializeField] private GameObject ammoPrefab; // Шаблон боеприпаса.
+    [SerializeField] private GameObject ammoPrefab; // РЁР°Р±Р»РѕРЅ Р±РѕРµРїСЂРёРїР°СЃР°.
 
-    private SetTargetDelegate settingTarget;
-    private RemoveTargetDelegate removingTarget;
+    private Action<Transform> setTargetAction; // РЈСЃС‚Р°РЅРѕРІС‰РёРє С†РµР»РµР№, РґР»СЏ РЅР°РІРѕРґРєРё.
 
-    public float strength = 5f; // Сила выстрела.
-    public float delay = 5f; // Задержка перед первым выстрелом.
-    public float repeatRate = 2.0f; //Темп стрельбы.
+    public float Strength = 5f; // РЎРёР»Р° РІС‹СЃС‚СЂРµР»Р°.
+    public float RepeatRate = 2.0f; //РўРµРјРї СЃС‚СЂРµР»СЊР±С‹.
 
-    public List<Transform> targets; // Список очереди целеуказания.
-    private ObjectPool<GameObject> pool; // Пул боеприпасов. 
+    public List<Transform> targets; // РЎРїРёСЃРѕРє РѕС‡РµСЂРµРґРё С†РµР»РµСѓРєР°Р·Р°РЅРёСЏ.
+    private ObjectPool<GameObject> pool; // РџСѓР» Р±РѕРµРїСЂРёРїР°СЃРѕРІ. 
+
+    private float elapsedTime = 0f; //РџСЂРѕР№РґРµРЅРЅРѕРµ РІСЂРµРјСЏ. РџСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё СѓР±СЂР°С‚СЊ Р·Р°РґРµСЂР¶РєСѓ РїРµСЂРІРѕРіРѕ РІС‹СЃС‚СЂРµР»Р°, СЃРѕ СЃС‚Р°СЂС‚Р° СЃС†РµРЅС‹.
     #endregion
 
     #region Mono Methods
     // Start is called before the first frame update
     void Start()
     {
-        //Инициализируем Pool.
+        //РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј Pool.
         pool = new ObjectPool<GameObject> (OnCreateAmmo, OnGetAmmoFromPool, OnReleaseAmmoToPool, OnDestroyAmmoFromPool, maxSize: 10);
 
-        //Инициализируем коллекцию.
+        //РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РєРѕР»Р»РµРєС†РёСЋ.
         targets = new List<Transform>();
 
-        //Крепим к делегату методы уведомлений двух поворотных частей.
-        settingTarget = new SetTargetDelegate(fastener.OnTargetChange);
-        settingTarget += weapon.OnTargetChange;
-
-        //Заменить.
-        InvokeRepeating(nameof(Fire), 5f, repeatRate);
+        //РљСЂРµРїРёРј Рє РґРµР»РµРіР°С‚Сѓ РјРµС‚РѕРґС‹ СѓРІРµРґРѕРјР»РµРЅРёР№ РґРІСѓС… РїРѕРІРѕСЂРѕС‚РЅС‹С… С‡Р°СЃС‚РµР№.
+        setTargetAction = new Action<Transform>(fastener.OnTargetChange);
+        setTargetAction += weapon.OnTargetChange;
     }
 
     // Update is called once per frame
     void Update()
     {
-        // Debug.
+        if(targets.Count != 0)
+        {
+            // РќР°С…РѕРґРёРј РІРµРєС‚РѕСЂ РЅР°РїСЂР°РІР»РµРЅРёСЏ РґРѕ С†РµР»Рё.
+            Vector3 direction = targets.First().transform.position - barrel.transform.position;
+
+            // РЎРјРѕС‚СЂРёРј СЃРѕРЅР°РїСЂР°РІР»РµРЅРЅРѕСЃС‚СЊ РІРµРєС‚РѕСЂРѕРІ С†РµР»Рё Рё РґСѓР»Р°.
+            float dotCondition = Vector3.Dot(direction.normalized, barrel.transform.forward);
+
+            if(dotCondition > ACCURACY)
+            {
+                // Р РµР°Р»РёР·Р°С†РёСЏ РїСЂРѕСЃС‚РѕРіРѕ СЃС‡РµС‚С‡РёРєР° РїСЂРѕР№РґРµРЅРЅРѕРіРѕ РІСЂРµРјРµРЅРё.
+                // РњРѕР¶РЅРѕ СѓР±СЂР°С‚СЊ Р·Р°РґРµСЂР¶РєСѓ 2f, СЃРѕ СЃС‚Р°СЂС‚Р° СЃС†РµРЅС‹, РїСЂРёСЃРІРѕРёРІ РїРѕР»СЋ, РІ РјРµСЃС‚Рµ РѕР±СЉСЏРІР»РµРЅРёСЏ 2f.
+                // Left as is.
+                elapsedTime += Time.deltaTime;
+                if (elapsedTime >= RepeatRate)
+                {
+                    // РЎС‚СЂРµР»СЏРµРј, РѕР±РЅРѕРІР»СЏРµРј С‚Р°Р№РјРµСЂ РїСЂРѕР№РґРµРЅРЅРѕРіРѕ РІСЂРµРјРµРЅРё.
+                    Fire();
+                    elapsedTime = 0f;
+                }
+            }
+        }
+        
+        // Debug. РћСЃС‚Р°РІР»РµРЅ, РІРёРґРµС‚СЊ РЅР°РІРѕРґРєСѓ(СѓРіРѕР» РІРµСЂС‚РёРєР°Р»СЊРЅС‹Р№ СЃ РѕРіСЂР°РЅРёС‡РёС‚РµР»РµРј + РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅС‹Р№),
+        // Р’С‹СЃС‚СЂРµР» СЃРЅР°СЂСЏРґР° РЅР° РІС‹С…РѕРґРµ СЃ РїСѓР»Р° СЃРѕ СЃС‚Р°СЂС‚Р° Рё РїРѕСЃР»Рµ.
         Debug.DrawRay(barrel.transform.position, barrel.transform.forward * 20f, Color.red);
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        //  Добавляем трансформ в список, для отслеживания.
+        //  Р”РѕР±Р°РІР»СЏРµРј С‚СЂР°РЅСЃС„РѕСЂРј РІ СЃРїРёСЃРѕРє, РґР»СЏ РѕС‚СЃР»РµР¶РёРІР°РЅРёСЏ.
         targets.Add(other.gameObject.transform);
-        // По умолчанию, первая попавшая цель - будет сопровождена до выхода и коллайдера.
-        settingTarget(targets.First());
+
+        // РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ, РїРµСЂРІР°СЏ РїРѕРїР°РІС€Р°СЏ С†РµР»СЊ - Р±СѓРґРµС‚ СЃРѕРїСЂРѕРІРѕР¶РґРµРЅР° РґРѕ РІС‹С…РѕРґР° Рё РєРѕР»Р»Р°Р№РґРµСЂР°.
+        setTargetAction(targets.First());
     }
 
     private void OnTriggerExit(Collider other)
     {
-        // Удаляем первый вход, поскольку вышел из области видимости турели.
+        // РЈРґР°Р»СЏРµРј РїРµСЂРІС‹Р№ РІС…РѕРґ, РїРѕСЃРєРѕР»СЊРєСѓ РІС‹С€РµР» РёР· РѕР±Р»Р°СЃС‚Рё РІРёРґРёРјРѕСЃС‚Рё С‚СѓСЂРµР»Рё.
         targets.Remove(other.gameObject.transform);
-        // Обновляем целеуказание, на следующий по очереди Transform.
-        // Null - целеуказание отсутствует. Вернуть турель в исходный поворот.
-        settingTarget(targets.FirstOrDefault());
+
+        // РћР±РЅРѕРІР»СЏРµРј С†РµР»РµСѓРєР°Р·Р°РЅРёРµ, РЅР° СЃР»РµРґСѓСЋС‰РёР№ РїРѕ РѕС‡РµСЂРµРґРё Transform.
+        // Null - С†РµР»РµСѓРєР°Р·Р°РЅРёРµ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚. Р’РµСЂРЅСѓС‚СЊ С‚СѓСЂРµР»СЊ РІ РёСЃС…РѕРґРЅС‹Р№ РїРѕРІРѕСЂРѕС‚.
+        setTargetAction(targets.FirstOrDefault());
     }
     #endregion
 
     #region Weapon Controller methods
     public void Fire()
     {
-        //TODO: Need Dot. Condition. Left as is.
+        // Р‘РµСЂРµРј РѕР±СЉРµРєС‚ РёР· РїСѓР»Р°.
         GameObject ammo = pool.Get();
         
-        // Задаем начальную точку. В данном случае якорь дула ( Якорь выставлен в Blender'e).
+        // Р—Р°РґР°РµРј РЅР°С‡Р°Р»СЊРЅСѓСЋ С‚РѕС‡РєСѓ. Р’ РґР°РЅРЅРѕРј СЃР»СѓС‡Р°Рµ СЏРєРѕСЂСЊ РґСѓР»Р° (РЇРєРѕСЂСЊ РІС‹СЃС‚Р°РІР»РµРЅ РІ Blender'e).
         ammo.transform.position = barrel.transform.position;
         ammo.transform.rotation = barrel.transform.rotation;
-        ammo.GetComponent<Rigidbody>().AddForce(barrel.transform.forward * strength, ForceMode.Impulse);
+        ammo.GetComponent<Rigidbody>().AddForce(barrel.transform.forward * Strength, ForceMode.Impulse);
     }
     #endregion
 
     #region Object Pool
+    /* РћРїРёСЃР°РЅРёРµ РјРµС‚РѕРґРѕРІ Intelli РѕСЃС‚Р°РІР»РµРЅРѕ. РќР° СЃР»СѓС‡Р°Р№ СѓР±СЂР°С‚СЊ РїРѕРґ СЃРІРѕР№ РїСѓР», Р»РёР±Рѕ РїРѕРјРµРЅСЏС‚СЊ Р»РѕРіРёРєСѓ РїСѓР»Р° Unity. */
+
     /// <summary>
-    /// Метод, вызываемый ObjectPool<>.Get(), если пул пустой.
+    /// РњРµС‚РѕРґ, РІС‹Р·С‹РІР°РµРјС‹Р№ ObjectPool<>.Get(), РµСЃР»Рё РїСѓР» РїСѓСЃС‚РѕР№.
     /// </summary>
-    /// <returns> Созданный объект пула из префаба. </returns>
+    /// <returns> РЎРѕР·РґР°РЅРЅС‹Р№ РѕР±СЉРµРєС‚ РїСѓР»Р° РёР· РїСЂРµС„Р°Р±Р°. </returns>
     public GameObject OnCreateAmmo()
     {
-        //Создаем объект из префаба и назначаем ему callback. (Один раз!).
+        //РЎРѕР·РґР°РµРј РѕР±СЉРµРєС‚ РёР· РїСЂРµС„Р°Р±Р° Рё РЅР°Р·РЅР°С‡Р°РµРј РµРјСѓ callback. (РћРґРёРЅ СЂР°Р·!).
+        //РњРёРґРёС„РёРєР°С‚РѕСЂ readonly - РЅРµ РёСЃРїРѕР»СЊР·СѓСЋ. РћР±С‹С‡РЅР°СЏ РїСЂРѕРІРµСЂРєР° РЅР° NULL.
         GameObject instance = Instantiate(ammoPrefab);
         instance.GetComponent<Ammunition>().SetActionOnReturn(pool.Release);
 
@@ -100,24 +126,24 @@ public sealed class WeaponController : MonoBehaviour
     }
 
     /// <summary>
-    /// Метод, вызываемый ObjectPool<>.Get.
+    /// РњРµС‚РѕРґ, РІС‹Р·С‹РІР°РµРјС‹Р№ ObjectPool<>.Get.
     /// </summary>
-    /// <param name="item"> Объект, из пула. </param>
+    /// <param name="item"> РћР±СЉРµРєС‚, РёР· РїСѓР»Р°. </param>
     public void OnGetAmmoFromPool(GameObject item)
     {
-        // Включаем влияение физики, а затем сам объект.
+        // Р’РєР»СЋС‡Р°РµРј РІР»РёСЏРµРЅРёРµ С„РёР·РёРєРё, Р° Р·Р°С‚РµРј СЃР°Рј РѕР±СЉРµРєС‚.
         //item.GetComponent<Rigidbody>().detectCollisions = true;
         //item.GetComponent<Rigidbody>().useGravity = true;
         item.SetActive(true);
     }
 
     /// <summary>
-    /// Метод, вызываемый ObjectPool<>.Release().
+    /// РњРµС‚РѕРґ, РІС‹Р·С‹РІР°РµРјС‹Р№ ObjectPool<>.Release().
     /// </summary>
-    /// <param name="item"> Объект, возвращаемый в пул. </param>
+    /// <param name="item"> РћР±СЉРµРєС‚, РІРѕР·РІСЂР°С‰Р°РµРјС‹Р№ РІ РїСѓР». </param>
     public void OnReleaseAmmoToPool(GameObject item)
     {
-        //// Отключаем влияние физики, расчет применяемых сил, а затем отключаем объект.
+        //// РћС‚РєР»СЋС‡Р°РµРј РІР»РёСЏРЅРёРµ С„РёР·РёРєРё, СЂР°СЃС‡РµС‚ РїСЂРёРјРµРЅСЏРµРјС‹С… СЃРёР», Р° Р·Р°С‚РµРј РѕС‚РєР»СЋС‡Р°РµРј РѕР±СЉРµРєС‚.
         //item.GetComponent<Rigidbody>().detectCollisions = false;
         //item.GetComponent<Rigidbody>().useGravity = false;
 
@@ -128,11 +154,9 @@ public sealed class WeaponController : MonoBehaviour
     }
 
     /// <summary>
-    /// Метод, вызываемый ObjectPool<>.Destroy().
+    /// РњРµС‚РѕРґ, РІС‹Р·С‹РІР°РµРјС‹Р№ ObjectPool<>.Destroy().
     /// </summary>
-    /// <param name="item"> Объект, удаляемый из пула.</param>
+    /// <param name="item"> РћР±СЉРµРєС‚, СѓРґР°Р»СЏРµРјС‹Р№ РёР· РїСѓР»Р°. </param>
     public void OnDestroyAmmoFromPool(GameObject item) => Destroy(item.gameObject);
     #endregion
 }
-
-
