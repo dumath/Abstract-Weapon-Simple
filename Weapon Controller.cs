@@ -10,7 +10,7 @@ public sealed class WeaponController : MonoBehaviour
     public const float ACCURACY = 0.9998f;
     #endregion
 
-    #region Object Propertyies
+    #region Object Properties
     [SerializeField] private Weapon weapon; // Турель.
     [SerializeField] private Fastener fastener; // Крепеж турели.
 
