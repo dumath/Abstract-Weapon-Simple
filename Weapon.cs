@@ -1,13 +1,13 @@
 using UnityEngine;
 
-/* Àáñòğàêöèÿ áàøåí îğóæèÿ. Ñíàğÿä-ğàêåòíûå.  */
+/* ĞĞ±ÑÑ‚Ñ€Ğ°ĞºÑ†Ğ¸Ñ Ğ±Ğ°ÑˆĞµĞ½ Ğ¾Ñ€ÑƒĞ¶Ğ¸Ñ. Ğ¡Ğ½Ğ°Ñ€ÑĞ´-Ñ€Ğ°ĞºĞµÑ‚Ğ½Ñ‹Ğµ.  */
 public abstract class Weapon : MonoBehaviour
 {
     #region Object Propertyies
-    [SerializeField] protected float rotationSpeed = 15.0f; // Ñêîğîñòü âåğòèêàëüíîãî ïîâîğîòà.
-    [SerializeField] protected float constrainedAngle = 25.0f; // Ïîëîæèòåëüíûé è îòğèöàòåëüíûé óãîë îãğàíè÷åíèÿ.
+    [SerializeField] protected float rotationSpeed = 15.0f; // Ğ¡ĞºĞ¾Ñ€Ğ¾ÑÑ‚ÑŒ Ğ²ĞµÑ€Ñ‚Ğ¸ĞºĞ°Ğ»ÑŒĞ½Ğ¾Ğ³Ğ¾ Ğ¿Ğ¾Ğ²Ğ¾Ñ€Ğ¾Ñ‚Ğ°.
+    [SerializeField] protected float constrainedAngle = 25.0f; // ĞœĞ¾Ğ´ÑƒĞ»ÑŒ Ğ²ĞµÑ€Ñ‚Ğ¸ĞºĞ°Ğ»ÑŒĞ½Ğ¾Ğ³Ğ¾ Ğ¾Ğ³Ñ€Ğ°Ğ½Ğ¸Ñ‡ĞµĞ½Ğ¸Ñ.
 
-    protected Transform currentTarget; // Òåêóùåå íàïğàâëåíèå íàâåäåíèÿ. NULL - âåğíóòü â èñêîäíîå çíà÷åíèå.
+    protected Transform currentTarget; // Ğ¢ĞµĞºÑƒÑ‰ĞµĞµ Ğ½Ğ°Ğ¿Ñ€Ğ°Ğ²Ğ»ĞµĞ½Ğ¸Ğµ Ğ½Ğ°Ğ²ĞµĞ´ĞµĞ½Ğ¸Ñ. NULL - Ğ²ĞµÑ€Ğ½ÑƒÑ‚ÑŒ Ğ² Ğ¸ÑĞºĞ¾Ğ´Ğ½Ğ¾Ğµ Ğ·Ğ½Ğ°Ñ‡ĞµĞ½Ğ¸Ğµ.
     #endregion
 
     #region Mono methods
@@ -16,34 +16,37 @@ public abstract class Weapon : MonoBehaviour
     {
         if (currentTarget != null)
         {
-            // Ïîëó÷àåì íàïğàâëåíèå, âûğàâíèâàåì ïëîñêîñòè.
+            // ĞŸĞ¾Ğ»ÑƒÑ‡Ğ°ĞµĞ¼ Ğ½Ğ°Ğ¿Ñ€Ğ°Ğ²Ğ»ĞµĞ½Ğ¸Ğµ, Ğ²Ñ‹Ñ€Ğ°Ğ²Ğ½Ğ¸Ğ²Ğ°ĞµĞ¼ Ğ¿Ğ»Ğ¾ÑĞºĞ¾ÑÑ‚Ğ¸.
             Vector3 direction = currentTarget.position - transform.position;
             Vector3 directionOnWeaponPlane = Vector3.ProjectOnPlane(direction, transform.right);
 
-            // Ïîëó÷àåì êâàòåğíèîí âûğîâíåííîãî íàïğàâëåíèÿ è ğàñ÷èòûâàåì íîâûé êâàòåğíèîí ñìåùåíèÿ â êàäğå.
+            // ĞŸĞ¾Ğ»ÑƒÑ‡Ğ°ĞµĞ¼ ĞºĞ²Ğ°Ñ‚ĞµÑ€Ğ½Ğ¸Ğ¾Ğ½ Ğ²Ñ‹Ñ€Ğ¾Ğ²Ğ½ĞµĞ½Ğ½Ğ¾Ğ³Ğ¾ Ğ½Ğ°Ğ¿Ñ€Ğ°Ğ²Ğ»ĞµĞ½Ğ¸Ñ Ğ¸ Ñ€Ğ°ÑÑ‡Ğ¸Ñ‚Ñ‹Ğ²Ğ°ĞµĞ¼ Ğ½Ğ¾Ğ²Ñ‹Ğ¹ ĞºĞ²Ğ°Ñ‚ĞµÑ€Ğ½Ğ¸Ğ¾Ğ½ ÑĞ¼ĞµÑ‰ĞµĞ½Ğ¸Ñ Ğ² ĞºĞ°Ğ´Ñ€Ğµ.
             Quaternion endRotation = Quaternion.LookRotation(directionOnWeaponPlane);
             Quaternion rotationQ = Quaternion.RotateTowards(transform.rotation, endRotation, rotationSpeed * Time.deltaTime);
 
             //TODO: CLAMP string 34. Bad solution - Clamp setted after transform =. Rewrite after rocket launcher class.
+            // X Ğ²Ñ€Ğ°Ñ‰ĞµĞ½Ğ¸Ğµ, Ğ´Ğ»Ñ Ğ¾Ğ³Ñ€Ğ°Ğ½Ğ¸Ñ‡ĞµĞ½Ğ¸Ñ Ğ½Ğµ Ğ¸ÑĞ¿Ğ¾Ğ»ÑŒĞ·ÑƒĞµĞ¼, Ñ‚Ğ¾Ğ»ÑŒĞºĞ¾ Ñ„Ğ¾Ñ€Ğ¼ÑƒĞ»Ğ°, Ğ¿Ğ¾ĞºĞ° Ñ‡Ñ‚Ğ¾ ÑÑ‚Ğ° Ğ¸Ğ½ÑÑ‚Ñ€ÑƒĞºÑ†Ğ¸Ñ Ğ½Ğ¸Ñ‡ĞµĞ³Ğ¾ Ğ½Ğµ Ğ´ĞµĞ»Ğ°ĞµÑ‚, ĞºÑ€Ğ¾Ğ¼Ğµ Ğ¿Ñ€Ğ¸ÑĞ²Ğ¾ĞµĞ½Ğ¸Ñ Ğ² Ğ»Ğ¾ĞºĞ°Ğ»ÑŒĞ½ÑƒÑ.
+            // Left as is.
             Vector3 clampedEuler = rotationQ.eulerAngles;
 
-            // Óñòàíàâëèâàåì íîâûé êâàğòåğíèîí.
+            // Ğ£ÑÑ‚Ğ°Ğ½Ğ°Ğ²Ğ»Ğ¸Ğ²Ğ°ĞµĞ¼ Ğ½Ğ¾Ğ²Ñ‹Ğ¹ ĞºĞ²Ğ°Ñ€Ñ‚ĞµÑ€Ğ½Ğ¸Ğ¾Ğ½.
             transform.rotation = rotationQ;
 
-            /* Äàëåå - íå õîğîøåå ğåøåíèå è ãğÿçíûé êîä. Bad solution. Up.*/
-            //Óãîë â ëîêàëüíûõ, çàâèñèò îò ïğîñòğàíñòâà ğîäèòåëÿ.
-            transform.localEulerAngles = new Vector3(Mathf.Clamp(transform.localEulerAngles.x, -constrainedAngle, constrainedAngle), 0f, 0f);
+            /* Ğ”Ğ°Ğ»ĞµĞµ - Ğ½Ğµ Ñ…Ğ¾Ñ€Ğ¾ÑˆĞµĞµ Ñ€ĞµÑˆĞµĞ½Ğ¸Ğµ Ğ¸ Ğ³Ñ€ÑĞ·Ğ½Ñ‹Ğ¹ ĞºĞ¾Ğ´. Bad solution. Up.*/
+            // Ğ£Ğ³Ğ¾Ğ» Ğ² Ğ»Ğ¾ĞºĞ°Ğ»ÑŒĞ½Ñ‹Ñ…, Ğ·Ğ°Ğ²Ğ¸ÑĞ¸Ñ‚ Ğ¾Ñ‚ Ğ¿Ñ€Ğ¾ÑÑ‚Ñ€Ğ°Ğ½ÑÑ‚Ğ²Ğ° Ñ€Ğ¾Ğ´Ğ¸Ñ‚ĞµĞ»Ñ.
+            transform.localEulerAngles = Vector3.right * Mathf.Clamp(transform.localEulerAngles.x, -constrainedAngle, constrainedAngle);
         }
         else
         {
-            // Öåëü íå çàäàíà. NULL. Óãîë â ëîêàëüíûõ, çàâèñèò îò ïğîñòğàíñòâà ğîäèòåëÿ.
+            // Ğ¦ĞµĞ»ÑŒ Ğ½Ğµ Ğ·Ğ°Ğ´Ğ°Ğ½Ğ°. NULL. Ğ£Ğ³Ğ¾Ğ» Ğ² Ğ»Ğ¾ĞºĞ°Ğ»ÑŒĞ½Ñ‹Ñ…, Ğ·Ğ°Ğ²Ğ¸ÑĞ¸Ñ‚ Ğ¾Ñ‚ Ğ¿Ñ€Ğ¾ÑÑ‚Ñ€Ğ°Ğ½ÑÑ‚Ğ²Ğ° Ñ€Ğ¾Ğ´Ğ¸Ñ‚ĞµĞ»Ñ.
+            // Ğ’Ğ¾Ğ·Ğ²Ñ€Ğ°Ñ‰Ğ°ĞµĞ¼ Ñ‚ÑƒÑ€ĞµĞ»ÑŒ Ğ² Ğ¸Ğ·Ğ½Ğ°Ñ‡Ğ°Ğ»ÑŒĞ½Ñ‹Ğ¹ Ğ¿Ğ¾Ğ²Ğ¾Ñ€Ğ¾Ñ‚.
             transform.localRotation = Quaternion.RotateTowards(transform.localRotation, Quaternion.identity, rotationSpeed * Time.deltaTime);
         }
     }
     #endregion
 
     #region Weapon methods
-    // Âûçûâàåòñÿ äåëåãàòîì èç WeaponController. Óñòàíàâëèâàåò ğàññ÷åòíóş öåëü. 
+    // Ğ’Ñ‹Ğ·Ñ‹Ğ²Ğ°ĞµÑ‚ÑÑ Ğ´ĞµĞ»ĞµĞ³Ğ°Ñ‚Ğ¾Ğ¼ Ğ¸Ğ· WeaponController. Ğ£ÑÑ‚Ğ°Ğ½Ğ°Ğ²Ğ»Ğ¸Ğ²Ğ°ĞµÑ‚ Ñ€Ğ°ÑÑÑ‡ĞµÑ‚Ğ½ÑƒÑ Ñ†ĞµĞ»ÑŒ. 
     public void OnTargetChange(Transform target) => currentTarget = target;
     #endregion
 }
