@@ -1,44 +1,46 @@
 using System;
 using UnityEngine;
 
-// Открыть доступ, если потребуется. Переопределение, сокрытие, загораживание в методах.
+// РћС‚РєСЂС‹С‚СЊ РґРѕСЃС‚СѓРї, РµСЃР»Рё РїРѕС‚СЂРµР±СѓРµС‚СЃСЏ. РџРµСЂРµРѕРїСЂРµРґРµР»РµРЅРёРµ, СЃРѕРєСЂС‹С‚РёРµ, Р·Р°РіРѕСЂР°Р¶РёРІР°РЅРёРµ РІ РєР»Р°СЃСЃРµ.
 public abstract class Ammunition : MonoBehaviour
 {
     #region Object propertyies
-    // Callback при попадании. Снаряд отработал.
+    // Callback РїСЂРё РїРѕРїР°РґР°РЅРёРё. РЎРЅР°СЂСЏРґ РѕС‚СЂР°Р±РѕС‚Р°Р».
     protected Action<GameObject> onReturnAction;
 
-    // Отработанный боеприпас?
+    // РћС‚СЂР°Р±РѕС‚Р°РЅРЅС‹Р№ Р±РѕРµРїСЂРёРїР°СЃ?
     protected bool isSpentAmmo = false;
 
-    //TODO: Нужен ли префаб? Снаряд обычный/осколочный..Для Андройда?
+    protected float timeToReturn = 10f;
+
+    //TODO: РќСѓР¶РµРЅ Р»Рё РїСЂРµС„Р°Р±? РЎРЅР°СЂСЏРґ РѕР±С‹С‡РЅС‹Р№/РѕСЃРєРѕР»РѕС‡РЅС‹Р№..Р”Р»СЏ РђРЅРґСЂРѕР№РґР°?
     #endregion
 
     #region Mono Methods
     protected virtual void OnCollisionEnter(Collision collision)
     {
-        //Чтобы физика не продолжала вызывать делегата, ставим флаг.
+        // Р§С‚РѕР±С‹ С„РёР·РёРєР° РЅРµ РїСЂРѕРґРѕР»Р¶Р°Р»Р° РІС‹Р·С‹РІР°С‚СЊ РґРµР»РµРіР°С‚Р°, СЃС‚Р°РІРёРј С„Р»Р°Рі.
         if (!isSpentAmmo)
             if (onReturnAction != null)
             {
-                Invoke(nameof(DelayReturn), 10f);
+                Invoke(nameof(DelayReturn), timeToReturn);
                 isSpentAmmo = true;
             }
     }
 
-    // При выключении пулом, свойство обновляется (возвращается исходное значение, чтобы снаряд можно было использовать повторно).
+    // РџСЂРё РІС‹РєР»СЋС‡РµРЅРёРё РїСѓР»РѕРј, СЃРІРѕР№СЃС‚РІРѕ РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ (РІРѕР·РІСЂР°С‰Р°РµС‚СЃСЏ РёСЃС…РѕРґРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ, С‡С‚РѕР±С‹ СЃРЅР°СЂСЏРґ РјРѕР¶РЅРѕ Р±С‹Р»Рѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РїРѕРІС‚РѕСЂРЅРѕ).
     protected void OnEnable() => isSpentAmmo = false;
     #endregion
 
     #region Ammunition Methods
-    //Ссылка ставится один раз и больше не меняется.
+    // РЎСЃС‹Р»РєР° СЃС‚Р°РІРёС‚СЃСЏ РѕРґРёРЅ СЂР°Р· Рё Р±РѕР»СЊС€Рµ РЅРµ РјРµРЅСЏРµС‚СЃСЏ.
     public void SetActionOnReturn(Action<GameObject> action)
     {
         if(onReturnAction == null)
             onReturnAction = action;
     }
 
-    // Возврат снаряда в пул происходит не сразу. Используется Invoke' ом.
+    // Р’РѕР·РІСЂР°С‚ СЃРЅР°СЂСЏРґР° РІ РїСѓР» РїСЂРѕРёСЃС…РѕРґРёС‚ РЅРµ СЃСЂР°Р·Сѓ. РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ Invoke' РѕРј.
     public void DelayReturn() => onReturnAction(this.gameObject);
     #endregion
 }
