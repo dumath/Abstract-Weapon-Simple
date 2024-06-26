@@ -23,7 +23,7 @@ public sealed class WeaponController : MonoBehaviour
     public float Strength = 5f; // Сила выстрела.
     public float RepeatRate = 2.0f; //Темп стрельбы.
 
-    public List<Transform> targets; // Список очереди целеуказания.
+    private List<Transform> targets; // Список очереди целеуказания.
     private ObjectPool<GameObject> pool; // Пул боеприпасов. 
 
     private float elapsedTime = 0f; //Пройденное время. При необходимости убрать задержку первого выстрела, со старта сцены.
