@@ -4,7 +4,7 @@ using UnityEngine;
 // Открыть доступ, если потребуется. Переопределение, сокрытие, загораживание в классе.
 public abstract class Ammunition : MonoBehaviour
 {
-    #region Object propertyies
+    #region Object properties
     // Callback при попадании. Снаряд отработал.
     protected Action<GameObject> onReturnAction;
 
