@@ -6,6 +6,7 @@ using System;
 
 public abstract class WeaponController : MonoBehaviour
 {
+    //TODO: Подключить emission на дуло. Карта запечена.
     #region Constants
     public const float ACCURACY = 0.9998f;
     #endregion
