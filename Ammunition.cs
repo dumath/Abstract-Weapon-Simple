@@ -60,9 +60,10 @@ public abstract class Ammunition : MonoBehaviour
     /// <param name="rotation"> Начальный поворот </param>
     /// <param name="force"> Силы выстрела </param>
     /// <param name="mode"> По умолчанию - Impulse. </param>
-    public virtual void AddForceAmmo(Vector3 position, Quaternion rotation , Vector3 force, ForceMode mode = ForceMode.Impulse)
+    public virtual void AddForce(Vector3 position, Quaternion rotation , Vector3 force, ForceMode mode = ForceMode.Impulse)
     {
-        gameObject.transform.position = position;
+        // Задана точка трансформа, body.position - не нужно. На дуле коллайдера нет.
+        gameObject.transform.position = position; 
         gameObject.transform.rotation = rotation;
         body.AddForce(force, mode);
     }
