@@ -51,7 +51,7 @@ public class TurretController : WeaponController
         Ammunition ammo = pool.Get();
 
         // Задаем начальную точку. В данном случае якорь дула (Якорь выставлен в Blender'e).
-        ammo.AddForceAmmo(weaponSight.position, weaponSight.rotation, weaponSight.forward * Strength);
+        ammo.AddForce(weaponSight.position, weaponSight.rotation, weaponSight.forward * Strength);
     }
     #endregion
 }
