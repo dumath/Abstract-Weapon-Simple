@@ -5,7 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))] // Чтобы не забыть.
 public abstract class Ammunition : MonoBehaviour
 {
-    // TODO: Поле для PSystem/(AudioClip? static?);
+    // TODO: Поле для PSystem/(AudioClip?);
     #region Object propertyies
     protected Action<Ammunition> onReturnAction; // Callback при попадании. Снаряд отработал.
 
