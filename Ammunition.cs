@@ -5,6 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))] // Чтобы не забыть.
 public abstract class Ammunition : MonoBehaviour
 {
+    // TODO: Поле для PSystem;
     #region Object propertyies
     protected Action<Ammunition> onReturnAction; // Callback при попадании. Снаряд отработал.
 
