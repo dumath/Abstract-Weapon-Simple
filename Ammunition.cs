@@ -1,46 +1,78 @@
 using System;
 using UnityEngine;
 
-// Открыть доступ, если потребуется. Переопределение, сокрытие, загораживание в классе.
+// Открыть доступ, если потребуется. Переопределение, сокрытие, загораживание в методах.
+[RequireComponent(typeof(Rigidbody))] // Чтобы не забыть.
 public abstract class Ammunition : MonoBehaviour
 {
-    #region Object properties
-    // Callback при попадании. Снаряд отработал.
-    protected Action<GameObject> onReturnAction;
+    #region Object propertyies
+    protected Action<Ammunition> onReturnAction; // Callback при попадании. Снаряд отработал.
 
-    // Отработанный боеприпас?
-    protected bool isSpentAmmo = false;
+    protected bool isSpentAmmo = false; // Отработанный боеприпас?
 
-    protected float timeToReturn = 10f;
+    protected Rigidbody body; // Твердое тело боеприпаса.
 
-    //TODO: Нужен ли префаб? Снаряд обычный/осколочный..Для Андройда?
+    [SerializeField] protected float timeToReturn = 10f; // Время, через которое снаряд вернется в пул.
+
+    [SerializeField] protected float damage = 0; // урон от боеприпаса
+
     #endregion
 
-    #region Mono Methods
+    #region Mono
+    // Ставим в Awake, чтобы был виден с инициализации префаба.
+    protected virtual void Awake() => body = GetComponent<Rigidbody>();
+    protected abstract void Start();
+    protected abstract void Update();
+
     protected virtual void OnCollisionEnter(Collision collision)
     {
         // Чтобы физика не продолжала вызывать делегата, ставим флаг.
         if (!isSpentAmmo)
             if (onReturnAction != null)
             {
-                Invoke(nameof(DelayReturn), timeToReturn);
                 isSpentAmmo = true;
+                Invoke(nameof(delayedReturn), timeToReturn);
             }
     }
 
     // При выключении пулом, свойство обновляется (возвращается исходное значение, чтобы снаряд можно было использовать повторно).
-    protected void OnEnable() => isSpentAmmo = false;
+    protected virtual void OnEnable() => isSpentAmmo = false;
     #endregion
 
-    #region Ammunition Methods
-    // Ссылка ставится один раз и больше не меняется.
-    public void SetActionOnReturn(Action<GameObject> action)
+    #region Ammunition
+    // Возврат снаряда в пул происходит не сразу. Используется Invoke' ом.
+    protected virtual void delayedReturn() => onReturnAction(this);
+
+
+    // Крепим метод возврата в пул.
+    public virtual void SetActionOnReturn(Action<Ammunition> action)
     {
-        if(onReturnAction == null)
+        // Ссылка ставится один раз и больше не меняется.
+        if (onReturnAction == null)
             onReturnAction = action;
     }
 
-    // Возврат снаряда в пул происходит не сразу. Используется Invoke' ом.
-    public void DelayReturn() => onReturnAction(this.gameObject);
+    /// <summary>
+    /// Применяется к RigidBody. Задает направление и силу снаряда. Объект не кинематический.
+    /// </summary>
+    /// <param name="position"> Начальная позиция </param>
+    /// <param name="rotation"> Начальный поворот </param>
+    /// <param name="force"> Силы выстрела </param>
+    /// <param name="mode"> По умолчанию - Impulse. </param>
+    public virtual void AddForceAmmo(Vector3 position, Quaternion rotation , Vector3 force, ForceMode mode = ForceMode.Impulse)
+    {
+        gameObject.transform.position = position;
+        gameObject.transform.rotation = rotation;
+        body.AddForce(force, mode);
+    }
+
+    /// <summary>
+    /// Обнуляет примененную силу.
+    /// </summary>
+    public virtual void ExhaustForce()
+    {
+        body.velocity = Vector3.zero;
+        body.angularVelocity = Vector3.zero;
+    }
     #endregion
 }
