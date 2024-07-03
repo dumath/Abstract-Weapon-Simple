@@ -22,24 +22,34 @@ public class TurretController : WeaponController
 
             // Смотрим сонаправленность векторов цели и дула.
             float dotCondition = Vector3.Dot(direction.normalized, weaponSight.forward);
-
             if (dotCondition > ACCURACY)
             {
                 // Реализация простого счетчика пройденного времени.
                 // Left as is.
                 // Внутри Turret controllera?? (Дуло приведено в прицел - общее свойство двух типов орудий)
                 elapsedTime += Time.deltaTime;
-                if (elapsedTime >= RepeatRate)
+                RaycastHit hit;
+                if (Physics.Raycast(weaponSight.position, direction, out hit, GetComponent<SphereCollider>().radius))
                 {
-                    // Стреляем, обновляем таймер пройденного времени.
-                    Fire();
-                    elapsedTime = 0f;
-                }
+                    // Player - ignore layer or <<layeMask;
+                    // maxDistance - выходит за пределы коллайдера. Left as is.
+                    /* Think: Отскок снаряда, будет ли роеализация после отскока, при попадании в другую цель - еще один отскок;
+                     На данном этапе, на ограждениях висит MESH коллайдер без convex , маска слоя для настроек проекта DEFAULT, пересечение выставлено со снарядом.
+                     А нужно ли это на B-In, Android? Прострел между балками Convex/Primitive */
+                    if (hit.transform.gameObject.tag == targets.First().gameObject.tag)
+                    {
+                        if (elapsedTime >= RepeatRate)
+                        {
+                            // Стреляем, обновляем таймер пройденного времени.
+                            Fire();
+                            elapsedTime = 0f;
+                        }
+                    }
+                }           
             }
         }
         // Debug. Оставлен, видеть наводку(угол вертикальный с ограничителем + горизонтальный),
         // Выстрел снаряда на выходе с пула со старта и после.
-
         Debug.DrawRay(weaponSight.position, weaponSight.forward * 20f, Color.red);
     }
     #endregion
@@ -53,5 +63,3 @@ public class TurretController : WeaponController
         // Задаем начальную точку. В данном случае якорь дула (Якорь выставлен в Blender'e).
         ammo.AddForce(weaponSight.position, weaponSight.rotation, weaponSight.forward * Strength);
     }
-    #endregion
-}
