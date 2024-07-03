@@ -6,7 +6,6 @@ using System;
 
 public abstract class WeaponController : MonoBehaviour
 {
-    //TODO: Подключить emission на дуло. Карта запечена.
     #region Constants
     public const float ACCURACY = 0.9998f;
     #endregion
@@ -37,7 +36,7 @@ public abstract class WeaponController : MonoBehaviour
         //Инициализируем Pool.
         pool = new ObjectPool<Ammunition>(OnCreateAmmo, OnGetAmmoFromPool, OnReleaseAmmoToPool, OnDestroyAmmoFromPool, maxSize: MaxSizePool);
 
-        //Инициализируем коллекцию.
+        //Инициализируем коллекцию целеуказания.
         targets = new List<Transform>();
 
         //Крепим к делегату методы уведомлений двух поворотных частей.
@@ -60,6 +59,10 @@ public abstract class WeaponController : MonoBehaviour
         setTargetAction(targets.First());
     }
 
+    // Пока - что 30fps с ограничителем, на Android'e. Raycast не переносим.
+    // Точность расчетов пока-что не нужна.
+    protected abstract void FixedUpdate(); 
+
     protected virtual void OnTriggerExit(Collider other)
     {
         // Удаляем первый вход, поскольку вышел из области видимости турели.
@@ -72,7 +75,7 @@ public abstract class WeaponController : MonoBehaviour
     #endregion
 
     #region Weapon Controller methods
-    // Базовая реализация используется для турельного типа
+    // Базовая реализация используется для турельного типа.
     public abstract void Fire();
     #endregion
 
@@ -88,7 +91,7 @@ public abstract class WeaponController : MonoBehaviour
         return instance.GetComponent<Ammunition>();
     }
 
-    // Метод, вызываемый ObjectPool<>.Get.
+    // Метод, вызываемый ObjectPool<>.Get().
     public void OnGetAmmoFromPool(Ammunition item) => item.gameObject.SetActive(true);
 
     // Метод, вызываемый ObjectPool<>.Release().
