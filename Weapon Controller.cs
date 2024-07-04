@@ -4,6 +4,17 @@ using UnityEngine;
 using UnityEngine.Pool;
 using System;
 
+
+/* Контроллер оружия. Состоит из 4 частей : Платформа, крепеж, оружие и прицел.
+ * Пул реализован на каждой платформе. 
+ * Чтобы расширить тип боеприпаса, поскольку барабан не масштабировался под различные форм - условия, нужно: 
+    - Добавить поле шаблона и инициализировать его.
+    - Реализовать WeaponAmmunitionType литерал значения.
+    - Обновить Drum класс. Реализован в самом низу.
+    - Добавить еще один OnCreateAmmoT-n (внутри метода задать ссылку на возврат в нужный пул ).
+    = В Awake, добавить значение в параметр, в вызове констркутора. */
+
+
 public abstract class WeaponController : MonoBehaviour
 {
     #region Constants
@@ -11,30 +22,36 @@ public abstract class WeaponController : MonoBehaviour
     #endregion
 
     #region Object propertyies
-    [SerializeField] protected Weapon weapon; // Турель.
-    [SerializeField] protected Fastener fastener; // Крепеж турели.
-    [SerializeField] protected Transform weaponSight; // Прицел оружия.
+    [SerializeField] protected Weapon weapon; // Оружие.
+    [SerializeField] protected Fastener fastener; // Крепеж.
+    [SerializeField] protected Transform weaponSight; // Прицел.
 
-    [SerializeField] private GameObject ammoPrefab; // Шаблон боеприпаса.
+    public WeaponAmmunitionType currentAmmoType; // Текущий тип боеприпаса.
+    [SerializeField] protected GameObject ammoPrefabFirst; // Шаблон боеприпаса 1-го типа.
+    [SerializeField] protected GameObject ammoPrefabSecond; // Шаблон боеприпаса 2-го типа.
 
-    protected Action<Transform> setTargetAction; // Установщик целей, для наводки.
+    protected Action<Transform> setTargetAction; // Установщик целей, для наводки 2-х поворотных частей.
 
     public float Strength = 5f; // Сила выстрела.
-    public float RepeatRate = 2.0f; //Темп стрельбы.
+    public float RepeatRate = 2.0f; // Темп стрельбы.
 
     protected float elapsedTime = 0f; // Пройденное время. При необходимости убрать задержку первого выстрела, со старта сцены.
 
     protected List<Transform> targets; // Список очереди целеуказания.
 
-    protected ObjectPool<Ammunition> pool; // Пул боеприпасов. 
-    public int MaxSizePool = 10;
+    protected Drum<Ammunition> drum; // Барабан боеприпасов.
+
+    public int MaxSizePool = 5; // Размер одной части пула.
     #endregion
 
     #region Mono
     protected virtual void Awake()
     {
-        //Инициализируем Pool.
-        pool = new ObjectPool<Ammunition>(OnCreateAmmo, OnGetAmmoFromPool, OnReleaseAmmoToPool, OnDestroyAmmoFromPool, maxSize: MaxSizePool);
+        //Инициализируем барабан.
+        drum = new Drum<Ammunition>(
+            new ObjectPool<Ammunition>(OnCreateAmmoT1, OnGetAmmoFromPool, OnReleaseAmmoToPool, OnDestroyAmmoFromPool, maxSize: MaxSizePool),
+            new ObjectPool<Ammunition>(OnCreateAmmoT2, OnGetAmmoFromPool, OnReleaseAmmoToPool, OnDestroyAmmoFromPool, maxSize: MaxSizePool)
+            );
 
         //Инициализируем коллекцию целеуказания.
         targets = new List<Transform>();
@@ -59,9 +76,8 @@ public abstract class WeaponController : MonoBehaviour
         setTargetAction(targets.First());
     }
 
-    // Пока - что 30fps с ограничителем, на Android'e. Raycast не переносим.
     // Точность расчетов пока-что не нужна.
-    protected abstract void FixedUpdate(); 
+    protected abstract void FixedUpdate();
 
     protected virtual void OnTriggerExit(Collider other)
     {
@@ -75,33 +91,95 @@ public abstract class WeaponController : MonoBehaviour
     #endregion
 
     #region Weapon Controller methods
-    // Базовая реализация используется для турельного типа.
+    // Общий метод у всех классов в иерархии.
     public abstract void Fire();
     #endregion
 
     #region Object Pool
-    // Метод, вызываемый ObjectPool<>.Get(), если пул пустой.
-    public Ammunition OnCreateAmmo()
+    // Метод, вызываемый ObjectPool<>.Get(), если пул пустой. Для первого префаба.
+    public Ammunition OnCreateAmmoT1()
     {
-        //Создаем объект из префаба и назначаем ему callback. (Один раз!).
-        //Мидификатор readonly - не использую. Обычная проверка на NULL.
-        GameObject instance = Instantiate(ammoPrefab);
-        instance.GetComponent<Ammunition>().SetActionOnReturn(pool.Release);
+        // Создаем боеприпас из шаблона и назначаем ему callback от типа боеприпаса. Один раз!
+        GameObject instance = Instantiate(ammoPrefabFirst);
+        instance.GetComponent<Ammunition>().SetActionOnReturn(drum.ReleaseByType(currentAmmoType));
 
         return instance.GetComponent<Ammunition>();
     }
 
+    // Метод, вызываемый ObjectPool<>.Get(), если пул пустой. Для второго префаба.
+    public Ammunition OnCreateAmmoT2()
+    {
+        // Создаем боеприпас из шаблона и назначаем ему callback от типа боеприпаса. Один раз!
+        GameObject instance = Instantiate(ammoPrefabSecond);
+        instance.GetComponent<Ammunition>().SetActionOnReturn(drum.ReleaseByType(currentAmmoType));
+        
+        return instance.GetComponent<Ammunition>();
+    }
+
     // Метод, вызываемый ObjectPool<>.Get().
-    public void OnGetAmmoFromPool(Ammunition item) => item.gameObject.SetActive(true);
+    public virtual void OnGetAmmoFromPool(Ammunition item) => item.gameObject.SetActive(true);
 
     // Метод, вызываемый ObjectPool<>.Release().
-    public void OnReleaseAmmoToPool(Ammunition item)
+    public virtual void OnReleaseAmmoToPool(Ammunition item)
     {
-        item.ExhaustForce();
+        item.ExhaustForce(); // ???
         item.gameObject.SetActive(false);
     }
 
     // Метод, вызываемый ObjectPool<>.Destroy().
-    public void OnDestroyAmmoFromPool(Ammunition item) => Destroy(item.gameObject);
+    public virtual void OnDestroyAmmoFromPool(Ammunition item) => Destroy(item.gameObject);
     #endregion
+}
+
+public enum WeaponTargettingMode { Forward, Upward }
+public enum WeaponAmmunitionType { T1, T2 }
+
+public class Drum<T> : IDisposable where T : class 
+{
+    /* 1 Вариант - реализовать IObjectPool<>
+     * 2 вариант - оболочка Drum.
+     * Оставлен 2.  */
+    private ObjectPool<T> poolT1;
+    private ObjectPool<T> poolT2;
+
+    /// <summary>
+    /// Активный конструктор барабана.
+    /// </summary>
+    /// <param name="t1"> Первый тип боеприпасов </param>
+    /// <param name="t2"> Второй тип боеприпасов </param>
+    public Drum(ObjectPool<T> t1, ObjectPool<T> t2)
+    {
+        poolT1 = t1;
+        poolT2 = t2;
+    }
+
+    // TODO: Сделать нормальную реализацию метода высвобождения.
+    public void Dispose()
+    {
+        poolT1 = null;
+        poolT2 = null;
+    }
+
+    public T GetByType(WeaponAmmunitionType type)
+    {
+        if(type == WeaponAmmunitionType.T1)
+            return poolT1.Get();
+
+        if(type == WeaponAmmunitionType.T2)
+            return poolT2.Get();
+
+        throw new NotImplementedException();
+    }
+
+    public Action<T> ReleaseByType(WeaponAmmunitionType type)
+    {
+        if (type == WeaponAmmunitionType.T1)
+            return poolT1.Release;
+
+        if (type == WeaponAmmunitionType.T2)
+            return poolT2.Release;
+
+        throw new NotImplementedException();
+    }
+
 }
