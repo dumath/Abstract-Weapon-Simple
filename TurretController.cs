@@ -15,8 +15,6 @@ public class TurretController : WeaponController
         /* Контроллер наводид оружие и отслеживает цели */
         if (targets.Count != 0)
         {
-            //TODO: Тут будет Raycast: Продумать логику смены цели.
-
             // Находим вектор направления до цели.
             Vector3 direction = targets.First().position - weaponSight.position;
 
@@ -27,16 +25,19 @@ public class TurretController : WeaponController
                 // Реализация простого счетчика пройденного времени.
                 // Left as is.
                 // Внутри Turret controllera?? (Дуло приведено в прицел - общее свойство двух типов орудий)
+                // Elapsed Time остается внутри наведения. Т.е. не считается, пока не наведется. Значения будут разные при входе в условие.
+                // Left as is.
                 elapsedTime += Time.deltaTime;
                 RaycastHit hit;
-                if (Physics.Raycast(weaponSight.position, direction, out hit, GetComponent<SphereCollider>().radius))
+
+                if (Physics.Raycast(weaponSight.position, direction, out hit, maxDistance: GetComponent<SphereCollider>().radius))
                 {
                     // Player - ignore layer or <<layeMask;
                     // maxDistance - выходит за пределы коллайдера. Left as is.
-                    // Радиус пули, при расчете точности, если прострел останется между балками, будет задевать балку и отскакивать, хотя оружие - ТОЧНО наведено.
-                    /* Think: Отскок снаряда, будет ли роеализация после отскока, при попадании в другую цель - еще один отскок;
+                    /* Think: Отскок снаряда, будет ли реализация после отскока, при попадании в другую цель - еще один отскок;
                      На данном этапе, на ограждениях висит MESH коллайдер без convex , маска слоя для настроек проекта DEFAULT, пересечение выставлено со снарядом.
-                     А нужно ли это на B-In, Android? Прострел между балками Convex/Primitive */
+                     А нужно ли это на B-In, Android? Прострел между балками Convex/Primitive ; CapsuleCast; LayerMask - Ignored Raycast
+                     Вариант - оставить прострел, но и оставить mesh - без convex, чтобы убрать Raycast, если понадобится.*/
                     if (hit.transform.gameObject.tag == targets.First().gameObject.tag)
                     {
                         if (elapsedTime >= RepeatRate)
@@ -53,14 +54,18 @@ public class TurretController : WeaponController
         // Выстрел снаряда на выходе с пула со старта и после.
         Debug.DrawRay(weaponSight.position, weaponSight.forward * 20f, Color.red);
     }
+
+    protected override void FixedUpdate() { }
     #endregion
 
     #region TurretController
     public override void Fire()
     {
         // Берем объект из пула.
-        Ammunition ammo = pool.Get();
+        Ammunition ammo = drum.GetByType(currentAmmoType);
 
         // Задаем начальную точку. В данном случае якорь дула (Якорь выставлен в Blender'e).
         ammo.AddForce(weaponSight.position, weaponSight.rotation, weaponSight.forward * Strength);
     }
+    #endregion
+}
