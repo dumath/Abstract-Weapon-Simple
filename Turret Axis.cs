@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class TurretAxis : WeaponAxis
@@ -8,24 +6,24 @@ public class TurretAxis : WeaponAxis
     {
         if (currentTarget != null)
         {
-            // Получаем направление, выравниваем плоскости.
+            // РџРѕР»СѓС‡Р°РµРј РЅР°РїСЂР°РІР»РµРЅРёРµ, РІС‹СЂР°РІРЅРёРІР°РµРј РїР»РѕСЃРєРѕСЃС‚Рё.
             Vector3 direction = currentTarget.position - transform.position;
             Vector3 directionOnWeaponPlane = Vector3.ProjectOnPlane(direction, transform.right);
 
-            // Получаем кватернион выровненного направления и расчитываем новый кватернион смещения в кадре.
+            // РџРѕР»СѓС‡Р°РµРј РєРІР°С‚РµСЂРЅРёРѕРЅ РІС‹СЂРѕРІРЅРµРЅРЅРѕРіРѕ РЅР°РїСЂР°РІР»РµРЅРёСЏ Рё СЂР°СЃС‡РёС‚С‹РІР°РµРј РЅРѕРІС‹Р№ РєРІР°С‚РµСЂРЅРёРѕРЅ СЃРјРµС‰РµРЅРёСЏ РІ РєР°РґСЂРµ.
             Quaternion endRotation = Quaternion.LookRotation(directionOnWeaponPlane);
             Quaternion rotationQ = Quaternion.RotateTowards(transform.rotation, endRotation, rotationSpeed * Time.deltaTime);
 
-            // Устанавливаем новый квартернион.
+            // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РЅРѕРІС‹Р№ РєРІР°СЂС‚РµСЂРЅРёРѕРЅ.
             transform.localRotation = WeaponAxis.Clamp(constrainedAngle, Vector3.right, rotationQ);
         }
         else
         {
-            // Возвращаем турель в изначальный поворот.
+            // Р’РѕР·РІСЂР°С‰Р°РµРј С‚СѓСЂРµР»СЊ РІ РёР·РЅР°С‡Р°Р»СЊРЅС‹Р№ РїРѕРІРѕСЂРѕС‚.
             transform.localRotation = Quaternion.RotateTowards(transform.localRotation, Quaternion.identity, rotationSpeed * Time.deltaTime);
         }
     }
 
-    // В турельном типе не используется.
+    // Р’ С‚СѓСЂРµР»СЊРЅРѕРј С‚РёРїРµ РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ.
     public override void SwitchMode(WeaponTargettingMode mode) { }
 }
