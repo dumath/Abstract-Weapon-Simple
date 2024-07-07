@@ -28,10 +28,10 @@ public abstract class WeaponAxis : MonoBehaviour
     /// <param name="axis"> Ось вращения </param>
     /// <param name="rotation"> Кватернион локальный, либо глобальный. </param>
     /// <returns> Кватернион ограниченный углом поворота. </returns>
-    public static Quaternion Clamp(float absoluteAngle, Vector3 axis, Quaternion rotation)
+    public static Quaternion Clamp(float constrainedAngle, Vector3 axis, Quaternion rotation)
     {
         Vector3 euler = rotation.eulerAngles;
-        Vector3 constraint = axis * Mathf.Abs(absoluteAngle);
+        Vector3 constraint = axis * Mathf.Abs(absoluteAngle); // По сути разворачивает зажим в обратную сторону. Как и axis.
         euler.x = Mathf.Clamp(euler.x, -constraint.x, constraint.x);
         euler.y = Mathf.Clamp(euler.y, -constraint.y, constraint.y);
         euler.z = Mathf.Clamp(euler.z, -constraint.z, constraint.z);
