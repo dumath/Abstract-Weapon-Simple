@@ -12,7 +12,7 @@ using System;
     - Реализовать WeaponAmmunitionType литерал значения.
     - Обновить Drum класс. Реализован в самом низу.
     - Добавить еще один OnCreateAmmoT-n (внутри метода задать ссылку на возврат в нужный пул ).
-    = В Awake, добавить значение в параметр, в вызове констркутора. */
+    = В Awake, добавить значение в параметр, в вызове конструктора. */
 
 
 public abstract class WeaponController : MonoBehaviour
@@ -22,8 +22,8 @@ public abstract class WeaponController : MonoBehaviour
     #endregion
 
     #region Object propertyies
-    [SerializeField] protected Weapon weapon; // Оружие.
-    [SerializeField] protected Fastener fastener; // Крепеж.
+    [SerializeField] protected WeaponAxis weaponAxis; // Ось оружия.
+    [SerializeField] protected PlatformAxis platformAxis; // Ось платформы.
     [SerializeField] protected Transform weaponSight; // Прицел.
 
     public WeaponAmmunitionType currentAmmoType; // Текущий тип боеприпаса.
@@ -57,8 +57,8 @@ public abstract class WeaponController : MonoBehaviour
         targets = new List<Transform>();
 
         //Крепим к делегату методы уведомлений двух поворотных частей.
-        setTargetAction += fastener.OnTargetChange;
-        setTargetAction += weapon.OnTargetChange;
+        setTargetAction += platformAxis.OnTargetChange;
+        setTargetAction += weaponAxis.OnTargetChange;
     }
 
     // Start is called before the first frame update
@@ -66,6 +66,9 @@ public abstract class WeaponController : MonoBehaviour
 
     // Update is called once per frame
     protected abstract void Update();
+
+    // Точность расчетов пока-что не нужна.
+    protected abstract void FixedUpdate();
 
     protected virtual void OnTriggerEnter(Collider other)
     {
@@ -75,9 +78,6 @@ public abstract class WeaponController : MonoBehaviour
         // По умолчанию, первая попавшая цель - будет сопровождена до выхода и коллайдера.
         setTargetAction(targets.First());
     }
-
-    // Точность расчетов пока-что не нужна.
-    protected abstract void FixedUpdate();
 
     protected virtual void OnTriggerExit(Collider other)
     {
@@ -90,8 +90,7 @@ public abstract class WeaponController : MonoBehaviour
     }
     #endregion
 
-    #region Weapon Controller methods
-    // Общий метод у всех классов в иерархии.
+    #region Weapon controller
     public abstract void Fire();
     #endregion
 
@@ -131,13 +130,15 @@ public abstract class WeaponController : MonoBehaviour
     #endregion
 }
 
-public enum WeaponTargettingMode { Forward, Upward }
+public enum WeaponTargettingMode { Forward, Upward, Forwardx2, Forwardx3, AllWeapons }
 public enum WeaponAmmunitionType { T1, T2 }
 
-public class Drum<T> : IDisposable where T : class 
+
+
+public class Drum<T> : IDisposable where T : class
 {
-    /* 1 Вариант - реализовать IObjectPool<>
-     * 2 вариант - оболочка Drum.
+    /* 1 Вариант - реализовать I<ObjectPool>
+     * 2 вариант - оболочка 2х - 3х - n'x ObjectPool, без масштабирования.
      * Оставлен 2.  */
     private ObjectPool<T> poolT1;
     private ObjectPool<T> poolT2;
@@ -162,10 +163,10 @@ public class Drum<T> : IDisposable where T : class
 
     public T GetByType(WeaponAmmunitionType type)
     {
-        if(type == WeaponAmmunitionType.T1)
+        if (type == WeaponAmmunitionType.T1)
             return poolT1.Get();
 
-        if(type == WeaponAmmunitionType.T2)
+        if (type == WeaponAmmunitionType.T2)
             return poolT2.Get();
 
         throw new NotImplementedException();
@@ -181,5 +182,4 @@ public class Drum<T> : IDisposable where T : class
 
         throw new NotImplementedException();
     }
-
 }
