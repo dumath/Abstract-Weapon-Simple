@@ -25,7 +25,7 @@ public abstract class AmmunitionDrum : MonoBehaviour
 
     
     // Меняет боеприпас. Не масштабируемая версия. При расширении изменить реализацию.
-    public virtual void SwichAmmunitionType()
+    public virtual void SwitchAmmunitionType()
     {
         switch(currentAmmunitionType)
         {
