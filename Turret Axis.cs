@@ -10,7 +10,7 @@ public class TurretAxis : WeaponAxis
             Vector3 direction = currentTarget.position - transform.position;
             Vector3 directionOnWeaponPlane = Vector3.ProjectOnPlane(direction, transform.right);
 
-            // Получаем кватернион выровненного направления и расчитываем новый кватернион смещения в кадре.
+            // Получаем кватернион выравненного направления и расчитываем новый кватернион смещения в кадре.
             Quaternion endRotation = Quaternion.LookRotation(directionOnWeaponPlane);
             Quaternion rotationQ = Quaternion.RotateTowards(transform.rotation, endRotation, rotationSpeed * Time.deltaTime);
 
@@ -27,3 +27,4 @@ public class TurretAxis : WeaponAxis
     // В турельном типе не используется.
     public override void SwitchMode(WeaponTargettingMode mode) { }
 }
+
